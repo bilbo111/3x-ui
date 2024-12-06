@@ -9,7 +9,7 @@
 
 **An Advanced Web Panel • Built on Xray Core**
 
-[![](https://img.shields.io/github/v/release/mhsanaei/3x-ui.svg)](https://github.com/bilbo111/3x-ui/releases)
+[![](https://img.shields.io/github/v/release/bilbo111/3x-ui.svg)](https://github.com/bilbo111/3x-ui/releases)
 [![](https://img.shields.io/github/actions/workflow/status/bilbo111/3x-ui/release.yml.svg)](#)
 [![GO Version](https://img.shields.io/github/go-mod/go-version/bilbo111/3x-ui.svg)](#)
 [![Downloads](https://img.shields.io/github/downloads/bilbo111/3x-ui/total.svg)](#)
@@ -188,7 +188,7 @@ systemctl restart x-ui
       --network=host \
       --restart=unless-stopped \
       --name 3x-ui \
-      ghcr.io/mhsanaei/3x-ui:latest
+      ghcr.io/bilbo111/3x-ui:latest
    ```
 
 4. **Update to the Latest Version:**
@@ -592,4 +592,4 @@ XUI_BIN_FOLDER="bin" XUI_DB_FOLDER="/etc/x-ui" go build main.go
 
 ## Stargazers over Time
 
-[![Stargazers over time](https://starchart.cc/MHSanaei/3x-ui.svg)](https://starchart.cc/MHSanaei/3x-ui)
+[![Stargazers over time](https://starchart.cc/bilbo111/3x-ui.svg)](https://starchart.cc/bilbo111/3x-ui)
