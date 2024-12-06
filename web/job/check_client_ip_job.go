@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"sort"
 	"time"
 
 	"x-ui/database"
@@ -149,7 +148,6 @@ func (j *CheckClientIpJob) processLogFile() bool {
 		for ip := range uniqueIps {
 			ips = append(ips, ip)
 		}
-		sort.Strings(ips)
 
 		inboundClientIps, err := j.getInboundClientIps(email)
 		if err != nil {
@@ -291,7 +289,6 @@ func (j *CheckClientIpJob) updateInboundClientIps(inboundClientIps *model.Inboun
 		}
 	}
 
-	sort.Strings(j.disAllowedIps)
 
 	if len(j.disAllowedIps) > 0 {
 		logger.Debug("disAllowedIps:", j.disAllowedIps)
