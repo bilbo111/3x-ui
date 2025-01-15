@@ -1140,39 +1140,6 @@ func (t *Tgbot) UserLoginNotify(username string, password string, ip string, tim
 	msg += t.I18nBot("tgbot.messages.time", "Time=="+time)
 	t.SendMsgToTgbotAdmins(msg)
 }
-func (t *Tgbot) addInbound(port int, email string, protocol string, remark string) {
-	_, err := t.inboundService.AddInbound(port, email, protocol, remark)
-	if err != nil {
-		logger.Warningf("Failed to add inbound: %v", err)
-		return
-	}
-
-    msg := fmt.Sprintf(t.I18nBot("tgbot.answers.addedInboundSuccessfully", "Port==%d, Email==%s, Protocol==%s, Remark==%s", port, email, protocol, remark)
-	t.SendMsgToTgbotAdmins(msg)
-}
-func (t *Tgbot) addClient(email string, password string, port int) {
-    _, err := t.inboundService.AddInboundUser(port, email, password)
-	if err != nil {
-		logger.Warningf("Failed to add client: %v", err)
-		return
-	}
-
-    msg := fmt.Sprintf(t.I18nBot("tgbot.answers.addedClientSuccessfully", "Email==%s, Password==%s, Port==%d", email, password, port)
-	t.SendMsgToTgbotAdmins(msg)
-}
-func (t *Tgbot) getClientQRCodeAndKey(email string, chatId int64) {
-    traffic, err := t.inboundService.GetClientTrafficByEmail(email)
-	if err != nil || traffic == nil {
-		logger.Warningf("Failed to get client: %v", err)
-		return
-	}
-
-	msg := fmt.Sprintf(t.I18nBot("tgbot.answers.clientInfo", "Email==%s, Password==%s, Port==%d", email, traffic.Password, traffic.InboundId)
-    inlineKeyboard := tu.InlineKeyboard(
-        tu.InlineKeyboardRow(
-            tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.refresh")).WithCallbackData(t.encodeQuery("client_get_usage "+email)))
-	t.editMessageTgBot(chatId, msg, inlineKeyboard)
-}
 
 func (t *Tgbot) getInboundUsages() string {
 	info := ""
@@ -1875,18 +1842,6 @@ func (t *Tgbot) editMessageCallbackTgBot(chatId int64, messageID int, inlineKeyb
 	}
 	if _, err := bot.EditMessageReplyMarkup(&params); err != nil {
 		logger.Warning(err)
-	}
-}
-	    
-func (t *Tgbot) getTimeZone(chatId int64, messageID ...int) {
-	output := t.I18nBot("tgbot.messages.timezone", "Zone=="+config.GetTimeZone())
-    inlineKeyboard := tu.InlineKeyboard(
-        tu.InlineKeyboardRow(
-            tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.refresh")).WithCallbackData(t.encodeQuery("get_usage"))),
-	if len(messageID) > 0 {
-		t.editMessageTgBot(chatId, messageID[0], output, inlineKeyboard)
-	} else {
-		t.SendMsgToTgbot(chatId, output, inlineKeyboard)
 	}
 }
 
