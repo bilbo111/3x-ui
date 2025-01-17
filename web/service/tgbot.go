@@ -257,6 +257,101 @@ func (t *Tgbot) OnReceive() {
 
 	botHandler.Start()
 }
+// Добавление команды и обработчика для добавления пользователя
+func (t *Tgbot) handleAddUserCommand(chatId int64, isAdmin bool) {
+	if !isAdmin {
+		t.SendMsgToTgbot(chatId, t.I18nBot("tgbot.noPermission"))
+		return
+	}
+
+	// Получаем список доступных подключений (inbounds)
+	inbounds, err := t.inboundService.GetAllInbounds()
+	if err != nil || len(inbounds) == 0 {
+		t.SendMsgToTgbot(chatId, t.I18nBot("tgbot.noInbounds"))
+		return
+	}
+
+	// Создаем клавиатуру для выбора подключения
+	var buttons []telego.InlineKeyboardButton
+	for _, inbound := range inbounds {
+		buttons = append(buttons, tu.InlineKeyboardButton(
+			fmt.Sprintf("%s (ID: %d)", inbound.Remark, inbound.Id),
+		).WithCallbackData(t.encodeQuery(fmt.Sprintf("add_user_inbound %d", inbound.Id))))
+	}
+
+	keyboard := tu.InlineKeyboardGrid(tu.InlineKeyboardCols(2, buttons...))
+	t.SendMsgToTgbot(chatId, t.I18nBot("tgbot.chooseInbound"), keyboard)
+}
+
+// Обработчик для выбора подключения и добавления пользователя
+func (t *Tgbot) handleAddUserCallback(callbackQuery *telego.CallbackQuery, isAdmin bool) {
+	if !isAdmin {
+		t.SendMsgToTgbot(callbackQuery.Message.Chat.ID, t.I18nBot("tgbot.noPermission"))
+		return
+	}
+
+	dataArray := strings.Split(callbackQuery.Data, " ")
+	if len(dataArray) != 2 {
+		t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.invalidCallback"))
+		return
+	}
+
+	// Извлекаем ID подключения
+	inboundId, err := strconv.Atoi(dataArray[1])
+	if err != nil {
+		t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.invalidInboundID"))
+		return
+	}
+
+	// Запросим email нового пользователя
+	inlineKeyboard := tu.InlineKeyboard(
+		tu.InlineKeyboardRow(
+			tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.cancel")).WithCallbackData("cancel"),
+		),
+	)
+
+	msg := t.I18nBot("tgbot.enterEmail")
+	t.SendMsgToTgbot(callbackQuery.Message.Chat.ID, msg, inlineKeyboard)
+
+	// Сохраняем состояние (например, через hashStorage)
+	hashStorage.SaveHash(fmt.Sprintf("add_user_email %d", inboundId), callbackQuery.From.ID)
+}
+
+// Обработчик ввода email и добавления пользователя
+func (t *Tgbot) handleUserEmailInput(message *telego.Message) {
+	hashKey := fmt.Sprintf("add_user_email %d", message.From.ID)
+	hashData, exists := hashStorage.GetValue(hashKey)
+	if !exists {
+		t.SendMsgToTgbot(message.Chat.ID, t.I18nBot("tgbot.noActiveOperation"))
+		return
+	}
+
+	// Извлекаем ID подключения
+	inboundId, err := strconv.Atoi(hashData)
+	if err != nil {
+		t.SendMsgToTgbot(message.Chat.ID, t.I18nBot("tgbot.invalidInboundID"))
+		return
+	}
+
+	email := strings.TrimSpace(message.Text)
+	if email == "" {
+		t.SendMsgToTgbot(message.Chat.ID, t.I18nBot("tgbot.invalidEmail"))
+		return
+	}
+
+	// Добавляем пользователя в подключение
+	client := &model.Client{Email: email, Enable: true}
+	err = t.inboundService.AddClientToInbound(inboundId, client)
+	if err != nil {
+		t.SendMsgToTgbot(message.Chat.ID, t.I18nBot("tgbot.addUserFailed", "Error=="+err.Error()))
+		return
+	}
+
+	// Уведомляем об успешном добавлении
+	t.SendMsgToTgbot(message.Chat.ID, t.I18nBot("tgbot.addUserSuccess", "Email=="+email))
+	// Удаляем состояние
+	hashStorage.DeleteHash(hashKey)
+}
 
 func (t *Tgbot) answerCommand(message *telego.Message, chatId int64, isAdmin bool) {
 	msg, onlyMessage := "", false
